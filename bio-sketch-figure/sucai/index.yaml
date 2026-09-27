@@ -1,0 +1,182 @@
+# 通用元素素材库索引
+# 出图时脚本会按当前页大纲里的关键词，从下面挑出「命中」的素材作为参考图发给绘图服务，
+# 让模型直接复用这些元素的造型、结构与配色，从而提高科研结构准确性与跨页一致性。
+#
+# 字段说明：
+#   id          素材唯一标识（英文小写+连字符，脚本内部用）
+#   name        中文名称（会写进发给模型的角色说明，如「元素素材「线粒体」」）
+#   keywords    命中关键词：当前页大纲文本里出现任意一个，该素材才会被选用
+#   description 一句话描述（供人查看与维护）
+#   file        素材文件（相对本目录）
+#   transparent 是否透明底（false 表示带底色，作为参考图时可能带进背景，谨慎使用）
+#
+# 维护提示：新增素材后放进本目录并在下面补一条；未列入本索引的图片不会被使用，
+#           运行 `check` 会提示「未入索引」的文件。
+
+- id: mitochondria
+  name: 线粒体
+  keywords: [线粒体, 能量代谢, 氧化磷酸化, 细胞器, 嵴, mitochondria]
+  description: 线粒体横截面，含外膜、内膜与嵴（浅粉底，非透明）
+  file: 线粒体.png
+  transparent: false
+
+- id: eukaryotic-cell
+  name: 真核细胞
+  keywords: [真核细胞, 细胞核, 细胞质, 细胞膜模型, 胞内, cell]
+  description: 真核细胞整体，突出核内 DNA/RNA（透明底）
+  file: 真核细胞.png
+  transparent: true
+
+- id: membrane-ros
+  name: 细胞膜与活性氧
+  keywords: [细胞膜, 活性氧, ROS, 氧化应激, 膜损伤]
+  description: 细胞膜结构并标注 ROS 作用位点（白底，含 ROS 文字）
+  file: 细胞膜_ROS.png
+  transparent: false
+
+- id: mouse-brain
+  name: 小鼠脑
+  keywords: [小鼠脑, 小脑, 脑区, 脑组织, 神经]
+  description: 小鼠脑，突出小脑（透明底，扁平矢量）
+  file: 小鼠脑.png
+  transparent: true
+
+- id: human-brain
+  name: 人脑
+  keywords: [人脑, 大脑, 脑区, 神经, 中枢神经, brain]
+  description: 人脑侧面解剖（透明底）
+  file: 人脑.png
+  transparent: true
+
+- id: lung-tumor
+  name: 肺与肿瘤病灶
+  keywords: [肺, 肺部, 肺癌, 肿瘤, 病灶, 转移, lung, tumor]
+  description: 肺部解剖并含肿瘤病灶（透明底）
+  file: 肺_肿瘤.png
+  transparent: true
+
+- id: lab-mouse
+  name: 实验小鼠
+  keywords: [小鼠, 老鼠, 模式动物, 实验动物, 动物模型, mouse]
+  description: 白色实验小鼠侧面（透明底）
+  file: 实验小鼠.png
+  transparent: true
+
+- id: mouse-injection
+  name: 小鼠尾静脉注射
+  keywords: [注射, 给药, 尾静脉, 尾静脉注射, 动物实验, injection]
+  description: 小鼠经细管接受注射给药（透明底）
+  file: 小鼠尾静脉注射.png
+  transparent: true
+
+- id: mouse-running-wheel
+  name: 小鼠跑轮
+  keywords: [跑轮, 行为学, 运动, 小鼠运动, running wheel]
+  description: 小鼠在金属跑轮中奔跑（透明底）
+  file: 小鼠跑轮.png
+  transparent: true
+
+- id: petri-dish
+  name: 培养皿
+  keywords: [培养皿, 培养基, 平板, 体外培养, petri]
+  description: 装有浅黄色培养基的培养皿（近白底）
+  file: 培养皿.png
+  transparent: false
+
+- id: petri-dish-colony
+  name: 培养皿与菌落
+  keywords: [培养皿, 菌落, 细菌培养, 克隆, 平板计数, colony]
+  description: 蓝色培养基上分布黄色菌落的培养皿（透明底）
+  file: 培养皿_菌落.png
+  transparent: true
+
+- id: pipette
+  name: 移液器
+  keywords: [移液器, 移液枪, 加样, 移液, pipette]
+  description: 可调体积移液器（非透明底）
+  file: 移液器.png
+  transparent: false
+
+- id: test-tube
+  name: 试管
+  keywords: [试管, 离心管, 试剂, 样本, 溶液, tube]
+  description: 装有橙棕色液体的玻璃试管（黑底，非透明）
+  file: 试管.png
+  transparent: false
+
+- id: lab-analyzer
+  name: 实验室分析仪
+  keywords: [分析仪, 检测仪, 仪器, 设备, PCR, 测序, analyzer]
+  description: 实验室分析仪器，含主机与显示屏控制单元（透明底）
+  file: 实验室分析仪.png
+  transparent: true
+
+- id: desktop-computer
+  name: 台式电脑
+  keywords: [电脑, 计算机, 工作站, 数据分析, 建模, computer]
+  description: 显示器+键盘+鼠标的工作台（透明底）
+  file: 台式电脑.png
+  transparent: true
+
+- id: porous-scaffold
+  name: 三维多孔支架
+  keywords: [支架, 多孔, 三维结构, 支架材料, 骨修复, scaffold]
+  description: 三维曲面多孔支架结构（透明底）
+  file: 三维多孔支架.png
+  transparent: true
+
+- id: nickel-foam
+  name: 泡沫镍
+  keywords: [泡沫镍, 多孔金属, 集流体, 电极, 电催化, foam]
+  description: 笼状多孔泡沫镍结构（透明底，3D 渲染）
+  file: 泡沫镍.png
+  transparent: true
+
+- id: ginseng
+  name: 人参全株
+  keywords: [人参, 药用植物, 药材, 根, 皂苷, ginseng]
+  description: 人参完整植株（粉底，非透明）
+  file: 人参全株.png
+  transparent: false
+
+- id: rice
+  name: 水稻
+  keywords: [水稻, 稻, 稻穗, 作物, 农作物, rice]
+  description: 单株成熟水稻/稻穗（黑底，非透明）
+  file: 水稻.png
+  transparent: false
+
+- id: wood-log
+  name: 木材原木
+  keywords: [木材, 原木, 木质, 木段, 生物质, wood]
+  description: 木质圆柱原木段（透明底）
+  file: 木材原木.png
+  transparent: true
+
+- id: spirilla
+  name: 螺旋菌
+  keywords: [螺旋菌, 细菌, 微生物, 菌群, 肠道菌, bacteria]
+  description: 成簇螺旋状微生物（黑底，非透明）
+  file: 螺旋菌.png
+  transparent: false
+
+- id: helminth
+  name: 寄生蠕虫
+  keywords: [蠕虫, 寄生虫, 吸虫, 绦虫, 虫体, worm]
+  description: 寄生蠕虫解剖结构（透明底）
+  file: 寄生蠕虫.png
+  transparent: true
+
+- id: stink-bug
+  name: 蝽象
+  keywords: [蝽, 昆虫, 害虫, 半翅目, insect]
+  description: 蝽类昆虫背视图（透明底）
+  file: 蝽象.png
+  transparent: true
+
+- id: wasp
+  name: 胡蜂
+  keywords: [胡蜂, 蜂, 天敌, 授粉, 昆虫, wasp]
+  description: 黄黑相间胡蜂正面（透明底）
+  file: 胡蜂.png
+  transparent: true

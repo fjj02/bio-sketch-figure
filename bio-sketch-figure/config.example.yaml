@@ -1,0 +1,23 @@
+# bio-sketch-figure 配置模板
+# 用法（任选其一）：
+#   1) 运行 init 写入用户级配置（推荐）
+#        python scripts/bio_sketch_figure.py init --text-key <KEY> --image-key <KEY>
+#   2) 复制本文件到 ~/.bio-sketch-figure/config.yaml，填入下面的凭证
+#   3) 用环境变量：BIO_SKETCH_TEXT_KEY / BIO_SKETCH_IMAGE_KEY
+#
+# ⚠️ 只需填凭证。服务地址与出图引擎由技能内部处理，无需也不建议在此配置。
+# ⚠️ 本文件只放占位符，任何真实凭证都不得写入技能目录或提交到仓库。
+
+text:
+  api_key: "YOUR_OUTLINE_KEY"        # 规划凭证（生成内容大纲；识图与大纲合并为同一次调用，仅此阶段计费）
+  # proxy: "none"                     # 默认直连（忽略环境代理）；填 URL 才走代理，如 "http://127.0.0.1:9910"
+
+image:
+  api_key: "YOUR_RENDER_KEY"         # 出图凭证
+  # model: "nano-banana-2"           # 可选：覆盖默认出图模型
+  # proxy: "none"                     # 默认直连（忽略环境代理）；填 URL 才走代理，如 "http://127.0.0.1:9910"
+
+defaults:
+  out_dir: "./out"
+  max_ref_images: 5                    # 每页参考图上限：用户图 → 风格图 → 命中素材，依次填
+  # max_elements_per_page: 2          # 每页最多加入几个命中素材（默认 2，仅在关键词命中时才加）
