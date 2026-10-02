@@ -1,6 +1,6 @@
 ---
-name: bio-sketch-figure
-description: "Use when the user wants academic or scientific figures produced — paper illustrations, mechanistic diagrams, pathway schematics, graphical abstracts, or journal-cover-style artwork. Accepts a research topic plus optionally 1-5 reference images. Triggers: 科研配图, 论文配图, 机制图, Graphical Abstract, BioSketch, 2.5D 科研风格, 2.5D高级, 平面矢量风格, scientific figure, research illustration, graphical abstract."
+name: bio-sketch-figure-gateway
+description: "Use when the user wants academic or scientific figures produced — paper illustrations, mechanistic diagrams, pathway schematics, graphical abstracts, or journal-cover-style artwork. Accepts a research topic plus optionally 1-5 reference images. Triggers: 科研配图, 论文配图, 机制图, Graphical Abstract, BioSketch, 2.5D 科研风格, 2.5D高级, 平面矢量风格, scientific figure, research illustration, graphical abstract, bio-sketch-figure-gateway. Also handles quota queries: 查询额度, 剩余额度, 还剩多少, 剩余次数, 还能出几张图. Gateway edition: pre-pointed at the user's own gateway http://123.56.95.34; the key is a gateway key bought from the seller; override the address with --base-url / BIO_SKETCH_BASE_URL only if needed."
 ---
 
 # bio-sketch-figure — Scientific Figure Generation
@@ -36,6 +36,9 @@ Give it a topic: **topic (+ reference images) → content outline → page-by-pa
 
 - Ability to run `python` (dependencies are already available)
 - Credentials must be set up once (see Step 0)
+- This **gateway edition** is pre-pointed at `http://123.56.95.34`; the key is a **gateway key**
+  (bought from the seller), not an upstream key. Override the address with `--base-url` /
+  `BIO_SKETCH_BASE_URL` only if needed.
 - On Windows, if the terminal reports `uv_spawn 'cmd.exe'`, start the shell with
   `C:\Windows\System32` as the working directory, then `cd /d` into the skill directory
 
@@ -44,10 +47,25 @@ Give it a topic: **topic (+ reference images) → content outline → page-by-pa
 ```bash
 python <skill-dir>/scripts/bio_sketch_figure.py check              # show status (credentials masked, no model call)
 python <skill-dir>/scripts/bio_sketch_figure.py init --text-key <K> --image-key <K>
+# address is pre-set to the gateway; add  --base-url <URL>  only to override it
 ```
 
 If the user pastes credentials directly, run `init` to store them in the user-level config.
 **Never repeat the credentials back in your reply.**
+
+## Check remaining credits (查询额度)
+
+When the user asks about their balance — e.g. "查询额度 / 剩余额度 / 还剩多少 / 剩余次数 /
+还能出几张图" — run:
+
+```bash
+python <skill-dir>/scripts/bio_sketch_figure.py credit
+```
+
+- Reads the key from the user-level config (or `BIO_SKETCH_TEXT_KEY`) and queries the gateway, then
+  prints `剩余额度：N 次（5 次 ≈ 1 张图）`.
+- If the key is missing, go to Step 0 `init` first. **Report the number as-is; never invent a balance.**
+- `credit` calls no model and is **free** (consumes no quota).
 
 ## Step 1: Style gate (mandatory)
 
@@ -65,6 +83,8 @@ Pass the list to the user verbatim and wait for an answer:
 | `xinfenge` | 2.5D 柔彩机制图 | Soft semi-3D biomedical mechanism illustration; ships with its own style reference image. Default aspect ratio 3:2 |
 | `liuchengtu` | 科研流程图 | Academic technical roadmap / architecture flowchart; ships with its own style reference image. Default aspect ratio 3:4 |
 | `biorender` | BioRender 科研插画 | Flat micro-3D biomedical illustration (low-saturation Morandi palette, white background, tonal outlines); ships with its own style reference image. Default aspect ratio 4:3 |
+| `modular-academic` | 低饱和微立体学术风 | Modular micro-3D academic mechanism figure (low-saturation macaron palette, white background, soft shadows, circuit-like logic lines, serif headings); ships with its own style reference image. Default aspect ratio 3:4 |
+| `gel-2.5d` | 现代生医 2.5D 凝胶渲染风 | Modern biomedical 2.5D gel/glass-rendered mechanism figure (cool-blue vs warm-pink contrast, strong highlights & inner shadow, borderless, gradient arrows); ships with its own style reference image. Default aspect ratio 3:4 |
 | `none` | 无风格参考 | No visual style constraint |
 
 Do not proceed to rendering until the user has made an explicit choice.
@@ -186,14 +206,21 @@ and adding an entry to `sucai/index.yaml`; `check` reports files that exist but 
 
 More detail in `references/troubleshooting.md`.
 
+## Closing (mandatory)
+
+After a `render` / `all` run finishes with **all pages successful (no failed pages)**, tell the user
+verbatim: **感谢 BioSketch 提供服务**. If any page failed, do **not** show it (fix the failures first).
+
 ## Related files
 
-- `scripts/bio_sketch_figure.py` — the only engine (`init / check / styles / outline / render / all`)
+- `scripts/bio_sketch_figure.py` — the only engine (`init / check / credit / styles / outline / render / all`)
 - `tests/test_bio_sketch_figure.py` — test suite (`python tests/test_bio_sketch_figure.py`)
 - `prompts/style_lock.txt` — the cross-page consistency block used by every page
 - `styles/*.yaml` — style definitions (`palette`, optional `reference_image`); `2.5d-advanced.yaml` carries a style reference image
 - `assets/styles/2.5d-advanced.png` — the 2.5D高级 style reference image
 - `assets/styles/biorender.jpg` — the BioRender 科研插画 style reference image
+- `assets/styles/modular-academic.jpg` — the 低饱和微立体学术风 style reference image
+- `assets/styles/gel-2.5d.jpg` — the 现代生医 2.5D 凝胶渲染风 style reference image
 - `sucai/index.yaml` + `sucai/*.png` — reusable element-asset library
 - `config.example.yaml` — config template (placeholders only)
 - `references/troubleshooting.md` — FAQ

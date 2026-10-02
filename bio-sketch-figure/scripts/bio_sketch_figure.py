@@ -35,6 +35,8 @@ DEFAULT_CONFIG_PATH = Path.home() / ".bio-sketch-figure" / "config.yaml"
 
 TEXT_KEY_ENV = "BIO_SKETCH_TEXT_KEY"
 IMAGE_KEY_ENV = "BIO_SKETCH_IMAGE_KEY"
+BASE_URL_ENV = "BIO_SKETCH_BASE_URL"
+GATEWAY_BASE_URL = "http://123.56.95.34"
 NO_STYLE_TEXT = "无特定风格要求"
 NONE_STYLE_ID = "none"
 MAX_DIMENSION = 2048
@@ -50,6 +52,7 @@ DOWNLOAD_MAX_RETRIES = 3
 # 对外展示名（不暴露底层服务与模型）
 SERVICE_NAME = "BioSketch"
 IMAGE_SERVICE_LABEL = "biosketch"
+THANKS_MESSAGE = "感谢 BioSketch 提供服务"
 
 TYPE_MAPPING = {"封面": "cover", "内容": "content", "总结": "summary"}
 ORDER_CN = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"]
@@ -927,7 +930,7 @@ class ImageClient:
 # ==================== 配置与 IO ====================
 
 DEFAULT_TEXT = {
-    "base_url": "https://grsai.dakka.com.cn",
+    "base_url": GATEWAY_BASE_URL,
     "endpoint_type": "/v1/chat/completions",
     "model": "gemini-3-pro",
     "temperature": 1,
@@ -937,7 +940,7 @@ DEFAULT_TEXT = {
     "proxy": "",
 }
 DEFAULT_IMAGE = {
-    "base_url": "https://grsai.dakka.com.cn",
+    "base_url": GATEWAY_BASE_URL,
     "endpoint_type": "/v1/draw/nano-banana",
     "result_endpoint": "/v1/draw/result",
     "model": "nano-banana-2",
@@ -966,6 +969,10 @@ def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
     defaults = {**DEFAULT_DEFAULTS, **(raw.get("defaults") or {})}
     text["api_key"] = os.environ.get(TEXT_KEY_ENV) or text.get("api_key") or ""
     image["api_key"] = os.environ.get(IMAGE_KEY_ENV) or image.get("api_key") or ""
+    env_base_url = os.environ.get(BASE_URL_ENV)
+    if env_base_url:
+        text["base_url"] = env_base_url
+        image["base_url"] = env_base_url
     return {"text": text, "image": image, "defaults": defaults, "_path": str(path)}
 
 
@@ -1360,6 +1367,9 @@ def cmd_init(args: argparse.Namespace) -> None:
         text["api_key"] = args.text_key
     if args.image_key:
         image["api_key"] = args.image_key
+    if getattr(args, "base_url", None):
+        text["base_url"] = args.base_url
+        image["base_url"] = args.base_url
     payload: Dict[str, Any] = {}
     if text:
         payload["text"] = text
@@ -1373,6 +1383,7 @@ def cmd_init(args: argparse.Namespace) -> None:
     print(f"[init] 配置已写入: {path}")
     print(f"[init] 规划凭证 = {mask_key(text.get('api_key'))}")
     print(f"[init] 出图凭证 = {mask_key(image.get('api_key'))}")
+    print(f"[init] 服务地址 = {text.get('base_url') or GATEWAY_BASE_URL}")
     print("[init] 提示：该文件属敏感信息，请勿提交到任何仓库。")
 
 
@@ -1386,6 +1397,7 @@ def cmd_check(args: argparse.Namespace) -> None:
     image = config["image"]
     print(f"[check] 规划凭证: {'已配置' if text.get('api_key') else '未配置'}")
     print(f"[check] 出图凭证: {'已配置' if image.get('api_key') else '未配置'}")
+    print(f"[check] 服务地址: {text.get('base_url') or GATEWAY_BASE_URL}")
     print(f"[check] 服务: {SERVICE_NAME} / {IMAGE_SERVICE_LABEL} — 已就绪")
     for name in ("outline_prompt.txt", "image_prompt.txt", "style_lock.txt"):
         path = PROMPTS_DIR / name
@@ -1411,6 +1423,52 @@ def cmd_check(args: argparse.Namespace) -> None:
             )
     print("[check] 说明：check 不会调用文本模型，不产生任何计费")
     print("[check] 文本模型仅在大纲阶段（outline）调用，且一次大纲只发一个请求")
+
+
+def cmd_credit(args: argparse.Namespace) -> None:
+    """查询剩余额度（网关 /v1/credit），不调用文本/出图模型，不产生计费。"""
+    config = load_config(args.config)
+    text = config["text"]
+    image = config["image"]
+    key = text.get("api_key") or image.get("api_key")
+    if not key:
+        raise SystemExit(
+            "❌ 未配置访问凭证，无法查询额度。\n"
+            f"方案一：设置环境变量 {TEXT_KEY_ENV}\n"
+            "方案二：运行 init 写入用户级配置\n"
+            "  python scripts/bio_sketch_figure.py init --text-key <KEY>"
+        )
+    base = normalize_base_url(text.get("base_url") or GATEWAY_BASE_URL)
+    url = f"{base}/v1/credit"
+    session = make_session(text)
+    try:
+        response = session.get(
+            url,
+            headers={"Accept": "application/json", "Authorization": f"Bearer {key}"},
+            timeout=20,
+        )
+    except requests.RequestException as exc:
+        raise SystemExit(f"❌ 网络连接失败，未能查询额度，请检查网络后重试。\n{exc}")
+    if response.status_code == 200:
+        try:
+            data = response.json()
+        except ValueError:
+            raise SystemExit(f"❌ 服务返回了无法解析的内容。\n{response.text[:200]}")
+        remaining = None
+        if isinstance(data, dict):
+            for field in ("remaining", "credit", "credits", "quota"):
+                if data.get(field) is not None:
+                    remaining = data.get(field)
+                    break
+        if remaining is None:
+            print(f"[额度] 原始返回：{json.dumps(data, ensure_ascii=False)[:200]}")
+            print("[额度] 未能从返回中解析出额度字段。")
+            return
+        print(f"[额度] 剩余额度：{remaining} 次（5 次 ≈ 1 张图）")
+        return
+    raise SystemExit(
+        "❌ " + _describe_http_error(response.status_code, response.text[:200])
+    )
 
 
 def cmd_styles(args: argparse.Namespace) -> None:
@@ -1465,6 +1523,12 @@ def _print_render_plan(
     raise SystemExit(1)
 
 
+def _print_thanks(result: Dict[str, Any]) -> None:
+    """本次出图全部成功（无失败页）时，打印对服务方的致谢。"""
+    if not (result or {}).get("failed"):
+        print(f"\n{THANKS_MESSAGE}")
+
+
 def cmd_render(args: argparse.Namespace) -> None:
     config = load_config(args.config)
     pages_file = Path(args.pages).resolve()
@@ -1490,7 +1554,7 @@ def cmd_render(args: argparse.Namespace) -> None:
             existing,
             args.overwrite,
         )
-    run_render(
+    result = run_render(
         str(pages_file),
         args.style,
         args.ref or [],
@@ -1502,6 +1566,7 @@ def cmd_render(args: argparse.Namespace) -> None:
         user_topic=args.topic or "",
         overwrite=args.overwrite,
     )
+    _print_thanks(result)
 
 
 def cmd_all(args: argparse.Namespace) -> None:
@@ -1523,7 +1588,7 @@ def cmd_all(args: argparse.Namespace) -> None:
             existing,
             args.overwrite,
         )
-    run_render(
+    render_result = run_render(
         str(task_dir / "pages.json"),
         args.style,
         args.ref or [],
@@ -1537,6 +1602,7 @@ def cmd_all(args: argparse.Namespace) -> None:
         overwrite=args.overwrite,
     )
     print(f"[all] 产物目录: {result['task_dir']}")
+    _print_thanks(render_result)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1552,10 +1618,14 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("init", help="写入用户级配置")
     p.add_argument("--text-key")
     p.add_argument("--image-key")
+    p.add_argument("--base-url", help="服务地址（默认内置网关，可覆盖）")
     p.set_defaults(func=cmd_init)
 
     p = sub.add_parser("check", help="校验配置与文件完整性（不调用文本模型）")
     p.set_defaults(func=cmd_check)
+
+    p = sub.add_parser("credit", help="查询剩余额度（不调用模型，不产生计费）")
+    p.set_defaults(func=cmd_credit)
 
     p = sub.add_parser("styles", help="列出可用风格")
     p.set_defaults(func=cmd_styles)
